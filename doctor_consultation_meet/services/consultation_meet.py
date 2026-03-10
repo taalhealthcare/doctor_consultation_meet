@@ -10,6 +10,10 @@ from doctor_consultation_meet.services.utils import (
     log_error,
     set_consultation_status,
 )
+from doctor_consultation_meet.services.notifications import (
+    send_email_notification,
+    send_whatsapp_notification_placeholder,
+)
 
 
 def on_doctor_consultation_after_insert(doc, method=None):
@@ -65,6 +69,7 @@ def generate_meet_for_consultation(consultation_name):
                 "message": "Consultation is not Online. No Meet generated."
             }
 
+        # Hard idempotency check
         if consultation.g_meet and consultation.google_event_id:
             return {
                 "ok": True,
@@ -93,6 +98,11 @@ def generate_meet_for_consultation(consultation_name):
         )
 
         upsert_erp_meet_record(consultation, meet_link)
+
+        # Send notifications after Meet link is successfully created
+        send_email_notification(consultation, meet_link)
+        send_whatsapp_notification_placeholder(consultation, meet_link)
+
         set_consultation_status(consultation.name, "Success")
         frappe.db.commit()
 
