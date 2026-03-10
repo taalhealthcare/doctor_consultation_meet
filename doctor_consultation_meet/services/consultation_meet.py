@@ -35,6 +35,7 @@ def on_doctor_consultation_after_insert(doc, method=None):
             "Queued",
             update_modified=True
         )
+        frappe.db.commit()
 
         frappe.enqueue(
             "doctor_consultation_meet.services.consultation_meet.generate_meet_for_consultation",
@@ -50,6 +51,7 @@ def on_doctor_consultation_after_insert(doc, method=None):
             message=frappe.get_traceback(),
             consultation_name=doc.name,
         )
+        frappe.db.commit()
 
 
 @frappe.whitelist()
@@ -72,6 +74,7 @@ def generate_meet_for_consultation(consultation_name):
             }
 
         set_consultation_status(consultation.name, "Pending")
+        frappe.db.commit()
 
         result = create_google_calendar_event_with_meet(consultation)
         meet_link = result["meet_link"]
@@ -91,6 +94,7 @@ def generate_meet_for_consultation(consultation_name):
 
         upsert_erp_meet_record(consultation, meet_link)
         set_consultation_status(consultation.name, "Success")
+        frappe.db.commit()
 
         return {
             "ok": True,
@@ -106,6 +110,7 @@ def generate_meet_for_consultation(consultation_name):
             message=str(e),
             consultation_name=consultation_name,
         )
+        frappe.db.commit()
         return {"ok": False, "message": str(e)}
 
     except Exception:
@@ -116,6 +121,7 @@ def generate_meet_for_consultation(consultation_name):
             message=error_message,
             consultation_name=consultation_name,
         )
+        frappe.db.commit()
         return {"ok": False, "message": "Unexpected error. Check Error Log."}
 
 
@@ -156,6 +162,8 @@ def upsert_erp_meet_record(consultation, meet_link):
         })
         doc.insert(ignore_permissions=True)
 
+    frappe.db.commit()
+
 
 @frappe.whitelist()
 def retry_generate_meet(consultation_name):
@@ -166,4 +174,5 @@ def retry_generate_meet(consultation_name):
         consultation_name=consultation_name,
         enqueue_after_commit=True,
     )
+    frappe.db.commit()
     return {"ok": True, "message": "Retry job queued."}
