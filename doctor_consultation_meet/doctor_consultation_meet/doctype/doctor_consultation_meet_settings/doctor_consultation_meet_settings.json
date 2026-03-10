@@ -1,0 +1,131 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-03-10 13:16:06.187225",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_mczz",
+  "enabled",
+  "google_client_id",
+  "google_client_secret",
+  "google_refresh_token",
+  "google_access_token",
+  "google_token_expiry",
+  "google_calendar_id",
+  "authorized_by_email",
+  "default_event_duration_minutes",
+  "event_timezone",
+  "oauth_state",
+  "last_auth_status",
+  "last_error",
+  "auto_create_on_insert"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_mczz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "google_client_id",
+   "fieldtype": "Data",
+   "label": "Google Client ID"
+  },
+  {
+   "fieldname": "google_client_secret",
+   "fieldtype": "Password",
+   "label": "Google Client Secret"
+  },
+  {
+   "fieldname": "google_refresh_token",
+   "fieldtype": "Password",
+   "label": "Google Refresh Token"
+  },
+  {
+   "fieldname": "google_access_token",
+   "fieldtype": "Password",
+   "label": "Google Access Token"
+  },
+  {
+   "fieldname": "google_token_expiry",
+   "fieldtype": "Datetime",
+   "label": "Google Token Expiry"
+  },
+  {
+   "default": "primary",
+   "fieldname": "google_calendar_id",
+   "fieldtype": "Data",
+   "label": "Google Calendar ID"
+  },
+  {
+   "fieldname": "authorized_by_email",
+   "fieldtype": "Data",
+   "label": "Authorized by Email"
+  },
+  {
+   "default": "30",
+   "fieldname": "default_event_duration_minutes",
+   "fieldtype": "Int",
+   "label": "Default Event Duration Minutes"
+  },
+  {
+   "default": "Asia / Kolkata",
+   "fieldname": "event_timezone",
+   "fieldtype": "Data",
+   "label": "Event Timezone"
+  },
+  {
+   "fieldname": "oauth_state",
+   "fieldtype": "Data",
+   "label": "OAuth State"
+  },
+  {
+   "fieldname": "last_auth_status",
+   "fieldtype": "Small Text",
+   "label": "Last Auth Status"
+  },
+  {
+   "fieldname": "last_error",
+   "fieldtype": "Long Text",
+   "label": "Last Error"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_create_on_insert",
+   "fieldtype": "Check",
+   "label": "Auto Create on Insert"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-03-10 13:28:18.606490",
+ "modified_by": "Administrator",
+ "module": "Doctor Consultation Meet",
+ "name": "Doctor Consultation Meet Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
