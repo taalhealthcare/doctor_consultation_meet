@@ -26,6 +26,7 @@ def get_google_authorize_url():
     state = frappe.generate_hash(length=32)
     settings.oauth_state = state
     settings.save(ignore_permissions=True)
+    frappe.db.commit()
 
     params = {
         "client_id": settings.google_client_id,
@@ -47,16 +48,24 @@ def callback(code=None, state=None, error=None):
     if error:
         settings.last_auth_status = f"OAuth error: {error}"
         settings.save(ignore_permissions=True)
+        frappe.db.commit()
         return "Google OAuth failed. Check settings."
 
     if not code:
         settings.last_auth_status = "OAuth failed: code missing"
         settings.save(ignore_permissions=True)
+        frappe.db.commit()
         return "OAuth code missing."
 
-    if state != settings.oauth_state:
-        settings.last_auth_status = "OAuth failed: invalid state"
+    saved_state = (settings.oauth_state or "").strip()
+    incoming_state = (state or "").strip()
+
+    if incoming_state != saved_state:
+        settings.last_auth_status = (
+            f"OAuth failed: invalid state. Saved={saved_state} Incoming={incoming_state}"
+        )
         settings.save(ignore_permissions=True)
+        frappe.db.commit()
         return "Invalid OAuth state."
 
     token_payload = {
@@ -70,8 +79,11 @@ def callback(code=None, state=None, error=None):
     response = requests.post(GOOGLE_TOKEN_URL, data=token_payload, timeout=30)
 
     if response.status_code != 200:
-        settings.last_auth_status = f"Token exchange failed. HTTP {response.status_code}. {response.text}"
+        settings.last_auth_status = (
+            f"Token exchange failed. HTTP {response.status_code}. {response.text}"
+        )
         settings.save(ignore_permissions=True)
+        frappe.db.commit()
         return "Token exchange failed. Check settings."
 
     data = response.json()
@@ -88,5 +100,6 @@ def callback(code=None, state=None, error=None):
 
     settings.last_auth_status = "Google OAuth completed successfully."
     settings.save(ignore_permissions=True)
+    frappe.db.commit()
 
     return "Google OAuth completed successfully. You can close this page."
