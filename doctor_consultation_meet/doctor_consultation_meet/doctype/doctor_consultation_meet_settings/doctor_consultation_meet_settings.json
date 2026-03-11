@@ -19,7 +19,12 @@
   "oauth_state",
   "last_auth_status",
   "last_error",
-  "auto_create_on_insert"
+  "auto_create_on_insert",
+  "whatsapp_enabled",
+  "whatsapp_phone_number_id",
+  "whatsapp_access_token",
+  "whatsapp_template_name",
+  "whatsapp_template_language"
  ],
  "fields": [
   {
@@ -100,6 +105,34 @@
    "fieldname": "auto_create_on_insert",
    "fieldtype": "Check",
    "label": "Auto Create on Insert"
+  },
+  {
+  "default": "0",
+  "fieldname": "whatsapp_enabled",
+  "fieldtype": "Check",
+  "label": "WhatsApp Enabled"
+  },
+  {
+  "fieldname": "whatsapp_phone_number_id",
+  "fieldtype": "Data",
+  "label": "WhatsApp Phone Number ID"
+  },
+  {
+  "fieldname": "whatsapp_access_token",
+  "fieldtype": "Password",
+  "label": "WhatsApp Access Token"
+  },
+  {
+  "default": "hello_world",
+  "fieldname": "whatsapp_template_name",
+  "fieldtype": "Data",
+  "label": "WhatsApp Template Name"
+  },
+  {
+  "default": "en_US",
+  "fieldname": "whatsapp_template_language",
+  "fieldtype": "Data",
+  "label": "WhatsApp Template Language"
   }
  ],
  "grid_page_length": 50,
