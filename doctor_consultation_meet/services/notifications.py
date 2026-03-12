@@ -49,7 +49,7 @@ def send_email_notification(consultation, meet_link):
             recipients=[consultation.email_to],
             subject=subject,
             message=message,
-            now=False,
+            now=True,
         )
     except Exception:
         log_error(
