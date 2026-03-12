@@ -24,7 +24,9 @@
   "whatsapp_phone_number_id",
   "whatsapp_access_token",
   "whatsapp_template_name",
-  "whatsapp_template_language"
+  "whatsapp_template_language",
+  "doctor_whatsapp_template_name",
+  "doctor_whatsapp_template_language"
  ],
  "fields": [
   {
@@ -133,6 +135,18 @@
   "fieldname": "whatsapp_template_language",
   "fieldtype": "Data",
   "label": "WhatsApp Template Language"
+  },
+  {
+  "default": "hello_world",
+  "fieldname": "doctor_whatsapp_template_name",
+  "fieldtype": "Data",
+  "label": "Doctor WhatsApp Template Name"
+  },
+  {
+  "default": "en_US",
+  "fieldname": "doctor_whatsapp_template_language",
+  "fieldtype": "Data",
+  "label": "Doctor WhatsApp Template Language"
   }
  ],
  "grid_page_length": 50,

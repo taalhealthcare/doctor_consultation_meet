@@ -11,10 +11,12 @@ from doctor_consultation_meet.services.utils import (
     set_consultation_status,
 )
 from doctor_consultation_meet.services.notifications import (
-    send_email_notification,
+    send_patient_email_notification,
+    send_doctor_email_notification,
 )
 from doctor_consultation_meet.services.whatsapp_meta import (
-    safe_send_whatsapp_template_message,
+    safe_send_patient_whatsapp,
+    safe_send_doctor_whatsapp,
 )
 
 
@@ -100,8 +102,11 @@ def generate_meet_for_consultation(consultation_name):
 
         upsert_erp_meet_record(consultation, meet_link)
 
-        send_email_notification(consultation, meet_link)
-        safe_send_whatsapp_template_message(consultation, meet_link)
+        send_patient_email_notification(consultation, meet_link)
+        send_doctor_email_notification(consultation, meet_link)
+
+        safe_send_patient_whatsapp(consultation, meet_link)
+        safe_send_doctor_whatsapp(consultation, meet_link)
 
         set_consultation_status(consultation.name, "Success")
         frappe.db.commit()
