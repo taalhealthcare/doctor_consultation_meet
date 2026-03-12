@@ -4,21 +4,29 @@ from doctor_consultation_meet.services.google_calendar import (
     create_google_calendar_event_with_meet,
     GoogleIntegrationError,
 )
+
 from doctor_consultation_meet.services.utils import (
     get_settings,
     is_online_consultation,
     log_error,
     set_consultation_status,
 )
+
 from doctor_consultation_meet.services.notifications import (
     send_patient_email_notification,
     send_doctor_email_notification,
+    send_admin_email_notification,
 )
+
 from doctor_consultation_meet.services.whatsapp_meta import (
     safe_send_patient_whatsapp,
     safe_send_doctor_whatsapp,
 )
 
+
+# ------------------------------------------------------------
+# Trigger after Doctor Consultation is created
+# ------------------------------------------------------------
 
 def on_doctor_consultation_after_insert(doc, method=None):
     try:
@@ -33,6 +41,7 @@ def on_doctor_consultation_after_insert(doc, method=None):
         if not is_online_consultation(doc):
             return
 
+        # prevent duplicate meet creation
         if doc.g_meet or doc.google_event_id:
             return
 
@@ -41,8 +50,9 @@ def on_doctor_consultation_after_insert(doc, method=None):
             doc.name,
             "meet_generation_status",
             "Queued",
-            update_modified=True
+            update_modified=True,
         )
+
         frappe.db.commit()
 
         frappe.enqueue(
@@ -62,17 +72,23 @@ def on_doctor_consultation_after_insert(doc, method=None):
         frappe.db.commit()
 
 
+# ------------------------------------------------------------
+# Meet Generation Worker
+# ------------------------------------------------------------
+
 @frappe.whitelist()
 def generate_meet_for_consultation(consultation_name):
+
     try:
         consultation = frappe.get_doc("Doctor Consultation", consultation_name)
 
         if not is_online_consultation(consultation):
             return {
                 "ok": True,
-                "message": "Consultation is not Online. No Meet generated."
+                "message": "Consultation is not Online. No Meet generated.",
             }
 
+        # prevent duplicate meet generation
         if consultation.g_meet and consultation.google_event_id:
             return {
                 "ok": True,
@@ -84,7 +100,12 @@ def generate_meet_for_consultation(consultation_name):
         set_consultation_status(consultation.name, "Pending")
         frappe.db.commit()
 
+        # ----------------------------------------------------
+        # Create Google Calendar Meet
+        # ----------------------------------------------------
+
         result = create_google_calendar_event_with_meet(consultation)
+
         meet_link = result["meet_link"]
         event_id = result["event_id"]
         request_id = result["request_id"]
@@ -100,13 +121,30 @@ def generate_meet_for_consultation(consultation_name):
             update_modified=True,
         )
 
+        # ----------------------------------------------------
+        # ERP Meet record
+        # ----------------------------------------------------
+
         upsert_erp_meet_record(consultation, meet_link)
+
+        # ----------------------------------------------------
+        # Email Notifications
+        # ----------------------------------------------------
 
         send_patient_email_notification(consultation, meet_link)
         send_doctor_email_notification(consultation, meet_link)
+        send_admin_email_notification(consultation, meet_link)
+
+        # ----------------------------------------------------
+        # WhatsApp Notifications
+        # ----------------------------------------------------
 
         safe_send_patient_whatsapp(consultation, meet_link)
         safe_send_doctor_whatsapp(consultation, meet_link)
+
+        # ----------------------------------------------------
+        # Mark success
+        # ----------------------------------------------------
 
         set_consultation_status(consultation.name, "Success")
         frappe.db.commit()
@@ -119,32 +157,49 @@ def generate_meet_for_consultation(consultation_name):
         }
 
     except GoogleIntegrationError as e:
+
         set_consultation_status(consultation_name, "Failed", str(e))
+
         log_error(
             title="Google Meet generation failed",
             message=str(e),
             consultation_name=consultation_name,
         )
+
         frappe.db.commit()
+
         return {"ok": False, "message": str(e)}
 
     except Exception:
+
         error_message = frappe.get_traceback()
+
         set_consultation_status(consultation_name, "Failed", error_message)
+
         log_error(
             title="Unexpected meet generation error",
             message=error_message,
             consultation_name=consultation_name,
         )
-        frappe.db.commit()
-        return {"ok": False, "message": "Unexpected error. Check Error Log."}
 
+        frappe.db.commit()
+
+        return {
+            "ok": False,
+            "message": "Unexpected error. Check Error Log.",
+        }
+
+
+# ------------------------------------------------------------
+# ERP Meet record create/update
+# ------------------------------------------------------------
 
 def upsert_erp_meet_record(consultation, meet_link):
+
     erp_meet_name = frappe.db.get_value(
         "ERP Meet",
         {"doctor_consultation_ref": consultation.name},
-        "name"
+        "name",
     )
 
     if not erp_meet_name and consultation.email_to:
@@ -152,36 +207,47 @@ def upsert_erp_meet_record(consultation, meet_link):
             "ERP Meet",
             {
                 "email": consultation.email_to,
-                "client_name": consultation.patient_name
+                "client_name": consultation.patient_name,
             },
-            "name"
+            "name",
         )
 
     if erp_meet_name:
+
         frappe.db.set_value(
             "ERP Meet",
             erp_meet_name,
             {
                 "google_meet": meet_link,
-                "doctor_consultation_ref": consultation.name
+                "doctor_consultation_ref": consultation.name,
             },
-            update_modified=True
+            update_modified=True,
         )
+
     else:
-        doc = frappe.get_doc({
-            "doctype": "ERP Meet",
-            "client_name": consultation.patient_name,
-            "email": consultation.email_to,
-            "google_meet": meet_link,
-            "doctor_consultation_ref": consultation.name,
-        })
+
+        doc = frappe.get_doc(
+            {
+                "doctype": "ERP Meet",
+                "client_name": consultation.patient_name,
+                "email": consultation.email_to,
+                "google_meet": meet_link,
+                "doctor_consultation_ref": consultation.name,
+            }
+        )
+
         doc.insert(ignore_permissions=True)
 
     frappe.db.commit()
 
 
+# ------------------------------------------------------------
+# Retry Meet generation
+# ------------------------------------------------------------
+
 @frappe.whitelist()
 def retry_generate_meet(consultation_name):
+
     frappe.enqueue(
         "doctor_consultation_meet.services.consultation_meet.generate_meet_for_consultation",
         queue="default",
@@ -189,5 +255,10 @@ def retry_generate_meet(consultation_name):
         consultation_name=consultation_name,
         enqueue_after_commit=True,
     )
+
     frappe.db.commit()
-    return {"ok": True, "message": "Retry job queued."}
+
+    return {
+        "ok": True,
+        "message": "Retry job queued.",
+    }
