@@ -458,7 +458,36 @@ function _dc_html(d) {
     H += '</div>';
 
     // ════════════════════════════════════════════════════════════
-    //  SECTION 2 — 3 doughnut charts
+    //  SECTION 2 — Snapshot summary stat cards
+    // ════════════════════════════════════════════════════════════
+    H += _dc_sechd("Section 6 — Snapshot summary");
+    H += '<div class="dc-g3b">';
+
+    var tdoc = d.topDoc.length > 22 ? d.topDoc.substring(0, 20) + "…" : d.topDoc;
+
+    H += _dc_stat("Top specialist",
+        d.topSp.name,
+        d.topSp.count + " consultations · " + d.topSpPct + "%",
+        "#D85A30", d.topSpPct
+    );
+    H += _dc_stat("Top doctor",
+        tdoc,
+        d.uDocs.length + " unique doctor(s) on record",
+        "#1D9E75", 100
+    );
+    H += _dc_stat("Meet success rate",
+        d.mRate + "%",
+        d.mOk + " of " + d.total + " meets generated",
+        "#639922", d.mRate
+    );
+
+    H += '</div>';
+    H += '</div>'; // close dcw
+
+    return H;
+
+    // ════════════════════════════════════════════════════════════
+    //  SECTION 3 — 3 doughnut charts
     //  Payment Status · Meet Generation · Gender Distribution
     // ════════════════════════════════════════════════════════════
     H += _dc_sechd("Section 2 — Status distribution charts");
@@ -510,7 +539,7 @@ function _dc_html(d) {
     H += '</div>';
 
     // ════════════════════════════════════════════════════════════
-    //  SECTION 3 — Specialist bar + Monthly trend line
+    //  SECTION 4 — Specialist bar + Monthly trend line
     // ════════════════════════════════════════════════════════════
     H += _dc_sechd("Section 3 — Volume & trend charts");
     H += '<div class="dc-g2">';
@@ -536,7 +565,7 @@ function _dc_html(d) {
     H += '</div>';
 
     // ════════════════════════════════════════════════════════════
-    //  SECTION 4 — Recent activity feed + Time slot heatmap
+    //  SECTION 5 — Recent activity feed + Time slot heatmap
     // ════════════════════════════════════════════════════════════
     H += _dc_sechd("Section 4 — Activity feed & time slot heatmap");
     H += '<div class="dc-g2">';
@@ -615,7 +644,7 @@ function _dc_html(d) {
     H += '</div>';
 
     // ════════════════════════════════════════════════════════════
-    //  SECTION 5 — Specialist revenue table + Meet pipeline
+    //  SECTION 6 — Specialist revenue table + Meet pipeline
     // ════════════════════════════════════════════════════════════
     H += _dc_sechd("Section 5 — Specialist revenue table & meet pipeline");
     H += '<div class="dc-g2">';
@@ -678,36 +707,7 @@ function _dc_html(d) {
 
     H += '</div>';
 
-    // ════════════════════════════════════════════════════════════
-    //  SECTION 6 — Snapshot summary stat cards
-    // ════════════════════════════════════════════════════════════
-    H += _dc_sechd("Section 6 — Snapshot summary");
-    H += '<div class="dc-g3b">';
-
-    var tdoc = d.topDoc.length > 22 ? d.topDoc.substring(0, 20) + "…" : d.topDoc;
-
-    H += _dc_stat("Top specialist",
-        d.topSp.name,
-        d.topSp.count + " consultations · " + d.topSpPct + "%",
-        "#D85A30", d.topSpPct
-    );
-    H += _dc_stat("Top doctor",
-        tdoc,
-        d.uDocs.length + " unique doctor(s) on record",
-        "#1D9E75", 100
-    );
-    H += _dc_stat("Meet success rate",
-        d.mRate + "%",
-        d.mOk + " of " + d.total + " meets generated",
-        "#639922", d.mRate
-    );
-
-    H += '</div>';
-    H += '</div>'; // close dcw
-
-    return H;
 }
-
 
 // ================================================================
 //  HTML COMPONENT HELPERS
