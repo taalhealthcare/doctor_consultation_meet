@@ -9,7 +9,7 @@
 frappe.pages["appointment-dashboard"].on_page_load = function (wrapper) {
     var page = frappe.ui.make_app_page({
         parent:        wrapper,
-        title:         "Appointment Dashboard",
+        title:         "Offline Doctor Consultation Dashboard",
         single_column: true
     });
 
