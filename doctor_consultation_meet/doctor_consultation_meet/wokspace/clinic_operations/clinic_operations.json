@@ -1,0 +1,244 @@
+{
+ "charts": [],
+ "content": "[{\"type\":\"header\",\"data\":{\"text\":\"<b>Reports &amp; Masters</b>\",\"level\":4,\"col\":12}},{\"type\":\"card\",\"data\":{\"card_name\":\"Dashboards\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Consultations\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Appointments\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Patients\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Practitioners & Locations\",\"col\":4}}]",
+ "creation": "2026-05-04 00:00:00.000000",
+ "doctype": "Workspace",
+ "icon": "healthcare",
+ "idx": 0,
+ "is_standard": 1,
+ "label": "Clinic Operations",
+ "links": [
+  {
+   "hidden": 0,
+   "label": "Dashboards",
+   "links": [
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Appointment Dashboard",
+     "link_count": 0,
+     "link_to": "appointment-dashboard",
+     "link_type": "Page",
+     "onboard": 0,
+     "type": "Link"
+    },
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Doctor Consultation Dashboard",
+     "link_count": 0,
+     "link_to": "doctor-consultation-dashboard",
+     "link_type": "Page",
+     "onboard": 0,
+     "type": "Link"
+    }
+   ],
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "label": "Reports",
+   "links": [
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Report of Appointment List",
+     "link_count": 0,
+     "link_to": "Report of Appointment List",
+     "link_type": "Report",
+     "onboard": 0,
+     "type": "Link"
+    }
+   ],
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "label": "Consultations",
+   "links": [
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Doctor Consultation",
+     "link_count": 0,
+     "link_to": "Doctor Consultation",
+     "link_type": "DocType",
+     "onboard": 0,
+     "type": "Link"
+    },
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "ERP Meet",
+     "link_count": 0,
+     "link_to": "ERP Meet",
+     "link_type": "DocType",
+     "onboard": 0,
+     "type": "Link"
+    },
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Doctor Consultation Meet Settings",
+     "link_count": 0,
+     "link_to": "Doctor Consultation Meet Settings",
+     "link_type": "DocType",
+     "onboard": 0,
+     "type": "Link"
+    }
+   ],
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "label": "Appointments",
+   "links": [
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Appointment Data",
+     "link_count": 0,
+     "link_to": "Appointment Data",
+     "link_type": "DocType",
+     "onboard": 0,
+     "type": "Link"
+    },
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Appointment Details",
+     "link_count": 0,
+     "link_to": "Appointment Details",
+     "link_type": "DocType",
+     "onboard": 0,
+     "type": "Link"
+    }
+   ],
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "label": "Patients",
+   "links": [
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Patient",
+     "link_count": 0,
+     "link_to": "Patient",
+     "link_type": "DocType",
+     "onboard": 0,
+     "type": "Link"
+    },
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Patient Appointment",
+     "link_count": 0,
+     "link_to": "Patient Appointment",
+     "link_type": "DocType",
+     "onboard": 0,
+     "type": "Link"
+    },
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Patient Medical Record",
+     "link_count": 0,
+     "link_to": "Patient Medical Record",
+     "link_type": "DocType",
+     "onboard": 0,
+     "type": "Link"
+    }
+   ],
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "label": "Practitioners & Locations",
+   "links": [
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Healthcare Practitioner",
+     "link_count": 0,
+     "link_to": "Healthcare Practitioner",
+     "link_type": "DocType",
+     "onboard": 0,
+     "type": "Link"
+    },
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Medical Department",
+     "link_count": 0,
+     "link_to": "Medical Department",
+     "link_type": "DocType",
+     "onboard": 0,
+     "type": "Link"
+    },
+    {
+     "hidden": 0,
+     "is_query_report": 0,
+     "label": "Branch",
+     "link_count": 0,
+     "link_to": "Branch",
+     "link_type": "DocType",
+     "onboard": 0,
+     "type": "Link"
+    }
+   ],
+   "type": "Card Break"
+  }
+ ],
+ "modified": "2026-05-04 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Doctor Consultation Meet",
+ "name": "Clinic Operations",
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "restrict_to_domain": "",
+ "roles": [],
+ "shortcuts": [
+  {
+   "color": "Purple",
+   "icon": "calendar",
+   "label": "Appointment Dashboard",
+   "link_to": "appointment-dashboard",
+   "type": "Page"
+  },
+  {
+   "color": "Teal",
+   "format": "{} Records",
+   "icon": "stethoscope",
+   "label": "Doctor Consultation",
+   "link_to": "Doctor Consultation",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "format": "{} Records",
+   "icon": "list",
+   "label": "Appointment Data",
+   "link_to": "Appointment Data",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "icon": "list",
+   "label": "Report of Appointment List",
+   "link_to": "Report of Appointment List",
+   "type": "Report"
+  },
+  {
+   "color": "Green",
+   "format": "{} Patients",
+   "icon": "user",
+   "label": "Patient",
+   "link_to": "Patient",
+   "type": "DocType"
+  }
+ ],
+ "title": "Clinic Operations"
+}
