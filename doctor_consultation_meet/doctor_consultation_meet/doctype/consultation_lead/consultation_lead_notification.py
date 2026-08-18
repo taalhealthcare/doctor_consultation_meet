@@ -48,11 +48,14 @@ DC_FIELD_CANDIDATES = {
 	"specialist": ["book_specialist"],
 	# --- STILL GUESSED: confirm with the console command in the guide ---
 	"mobile": ["patient_mobile", "mobile_no", "mobile", "phone", "contact_number"],
-	"mode": ["consultation_mode", "mode", "consultation_type", "type_of_consultation", "is_online"],
+	"mode": ["mode_of_consultation"],  # CONFIRMED from services/utils.py
 	"notes": ["notes", "remarks", "description", "chief_complaint"],
 }
 
-# VERIFY: the value your services/utils.py -> is_online_consultation() treats as online.
+# Your services/utils.py does:
+#     is_online_consultation(doc) -> normalize_mode(doc.mode_of_consultation) == "online"
+# so the stored value only has to normalise to "online". If mode_of_consultation is a
+# Select, resolve_online_value() below picks the real option instead of guessing.
 ONLINE_MODE_VALUE = "Online"
 
 
@@ -176,8 +179,11 @@ def create_doctor_consultation(lead):
 		if value in (None, ""):
 			continue
 		fieldname = resolve_field(meta, DC_FIELD_CANDIDATES.get(key, []))
-		if fieldname:
-			doc.set(fieldname, value)
+		if not fieldname:
+			continue
+		if key == "mode":
+			value = resolve_online_value(meta, fieldname)
+		set_if_valid(doc, meta, fieldname, value)
 
 	# Origin markers, created as Custom Fields by lead_setup.py.
 	# These make it obvious at a glance that a telecaller made this booking.
@@ -191,6 +197,35 @@ def create_doctor_consultation(lead):
 	doc.flags.ignore_mandatory = True
 	doc.insert(ignore_permissions=True)
 	return doc.name
+
+
+def resolve_online_value(meta, fieldname):
+	"""Return the exact value that mode_of_consultation should hold for Online.
+
+	If the field is a Select, pick the real option whose text contains "online",
+	so we never write a value Frappe would reject. Otherwise fall back to the
+	plain string, which normalize_mode() lower-cases anyway.
+	"""
+	df = meta.get_field(fieldname)
+	if df and df.fieldtype == "Select" and df.options:
+		for option in df.options.split("\n"):
+			if "online" in option.strip().lower():
+				return option.strip()
+	return ONLINE_MODE_VALUE
+
+
+def set_if_valid(doc, meta, fieldname, value):
+	"""Set a field, but never write a value a Select would reject.
+
+	Frappe throws on an out-of-list Select value, and that would abort the whole
+	booking. A skipped optional field is far better than a failed appointment.
+	"""
+	df = meta.get_field(fieldname)
+	if df and df.fieldtype == "Select" and df.options:
+		allowed = [o.strip() for o in df.options.split("\n")]
+		if str(value).strip() not in allowed:
+			return
+	doc.set(fieldname, value)
 
 
 def format_time_for_dc(meta, appointment_time):
