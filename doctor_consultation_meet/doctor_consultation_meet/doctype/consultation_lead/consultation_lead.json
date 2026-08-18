@@ -1,0 +1,572 @@
+{
+ "actions": [],
+ "allow_auto_repeat": 0,
+ "allow_import": 1,
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-08-18 10:00:00.000000",
+ "description": "One record per patient enquiry, from first call to consultation.",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "patient_section",
+  "patient_name",
+  "mobile_no",
+  "alt_mobile_no",
+  "email_id",
+  "patient_col_1",
+  "gender",
+  "dob",
+  "age",
+  "enquiry_section",
+  "chief_concern",
+  "doctor_preference",
+  "enquiry_col_1",
+  "preferred_date",
+  "preferred_time_slot",
+  "status_section",
+  "lead_status",
+  "status_col_1",
+  "follow_up_date",
+  "drop_reason",
+  "appointment_section",
+  "appointment_html",
+  "appointment_date",
+  "appointment_time",
+  "doctor_assigned",
+  "consultation_mode",
+  "appointment_col_1",
+  "patient",
+  "patient_appointment",
+  "consultation_done",
+  "meet_link",
+  "doctor_consultation_ref",
+  "meet_status",
+  "clinic_location",
+  "notification_section",
+  "email_sent",
+  "email_sent_on",
+  "notification_col_1",
+  "whatsapp_sent",
+  "whatsapp_sent_on",
+  "doctor_notified",
+  "doctor_notified_on",
+  "notification_remarks",
+  "reminder_section",
+  "reminder_sent",
+  "reminder_col_1",
+  "reminder_sent_on",
+  "source_section",
+  "lead_source",
+  "campaign",
+  "source_col_1",
+  "region",
+  "country",
+  "state",
+  "city",
+  "notes_section",
+  "remarks",
+  "system_section",
+  "naming_series",
+  "lead_date",
+  "telecaller",
+  "system_col_1",
+  "duplicate_of",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "patient_section",
+   "fieldtype": "Section Break",
+   "label": "Patient Details"
+  },
+  {
+   "description": "Full name as the patient says it.",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Patient Name",
+   "reqd": 1
+  },
+  {
+   "description": "10 digits for India. System checks for a repeat caller automatically.",
+   "fieldname": "mobile_no",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Contact Number",
+   "options": "Phone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "alt_mobile_no",
+   "fieldtype": "Data",
+   "label": "Alternate Number",
+   "options": "Phone"
+  },
+  {
+   "description": "Needed to send the confirmation. Compulsory for Online consultations.",
+   "fieldname": "email_id",
+   "fieldtype": "Data",
+   "label": "Email Address",
+   "mandatory_depends_on": "doc.consultation_mode == \"Online\" && (doc.lead_status == \"Appointment Booked\" || doc.lead_status == \"Consultation Done\")",
+   "options": "Email"
+  },
+  {
+   "fieldname": "patient_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Gender",
+   "options": "\nMale\nFemale\nOther"
+  },
+  {
+   "description": "Fill this if the patient knows it. Age fills in automatically.",
+   "fieldname": "dob",
+   "fieldtype": "Date",
+   "label": "Date of Birth"
+  },
+  {
+   "description": "Use only if date of birth is not known.",
+   "fieldname": "age",
+   "fieldtype": "Int",
+   "label": "Age (Years)"
+  },
+  {
+   "fieldname": "enquiry_section",
+   "fieldtype": "Section Break",
+   "label": "Enquiry"
+  },
+  {
+   "fieldname": "chief_concern",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Chief Concern / Reason",
+   "options": "Chief Concern",
+   "reqd": 1
+  },
+  {
+   "description": "Leave blank if the patient has no preference.",
+   "fieldname": "doctor_preference",
+   "fieldtype": "Link",
+   "label": "Doctor Preference",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fieldname": "enquiry_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "preferred_date",
+   "fieldtype": "Date",
+   "label": "Preferred Date"
+  },
+  {
+   "fieldname": "preferred_time_slot",
+   "fieldtype": "Link",
+   "label": "Preferred Time Slot",
+   "options": "Consultation Time Slot"
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "default": "New",
+   "fieldname": "lead_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Lead Status",
+   "options": "New\nContacted\nInterested\nAppointment Booked\nConsultation Done\nFollow-up\nNot Converted\nInvalid",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "doc.lead_status == \"Follow-up\" || doc.lead_status == \"Contacted\" || doc.lead_status == \"Interested\"",
+   "description": "A reminder task is created for you on this date.",
+   "fieldname": "follow_up_date",
+   "fieldtype": "Date",
+   "label": "Follow-up Date",
+   "mandatory_depends_on": "doc.lead_status == \"Follow-up\""
+  },
+  {
+   "depends_on": "doc.lead_status == \"Not Converted\" || doc.lead_status == \"Invalid\"",
+   "fieldname": "drop_reason",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Reason Not Converted",
+   "mandatory_depends_on": "doc.lead_status == \"Not Converted\"",
+   "options": "Lead Drop Reason"
+  },
+  {
+   "depends_on": "doc.lead_status == \"Appointment Booked\" || doc.lead_status == \"Consultation Done\"",
+   "fieldname": "appointment_section",
+   "fieldtype": "Section Break",
+   "label": "Appointment"
+  },
+  {
+   "fieldname": "appointment_html",
+   "fieldtype": "HTML",
+   "options": "<div class='text-muted small'>Fill the three boxes below and press <b>Ctrl + S</b>. The patient record and the appointment are created for you.</div>"
+  },
+  {
+   "fieldname": "appointment_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Appointment Date",
+   "mandatory_depends_on": "doc.lead_status == \"Appointment Booked\" || doc.lead_status == \"Consultation Done\""
+  },
+  {
+   "fieldname": "appointment_time",
+   "fieldtype": "Time",
+   "label": "Appointment Time",
+   "mandatory_depends_on": "doc.lead_status == \"Appointment Booked\" || doc.lead_status == \"Consultation Done\""
+  },
+  {
+   "fieldname": "doctor_assigned",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Doctor Assigned",
+   "mandatory_depends_on": "doc.lead_status == \"Appointment Booked\" || doc.lead_status == \"Consultation Done\"",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "default": "Online",
+   "description": "Online sends a Google Meet link. In-Clinic sends the clinic address instead.",
+   "fieldname": "consultation_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Consultation Mode",
+   "mandatory_depends_on": "doc.lead_status == \"Appointment Booked\" || doc.lead_status == \"Consultation Done\"",
+   "options": "Online\nIn-Clinic"
+  },
+  {
+   "fieldname": "appointment_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Created automatically when the appointment is booked.",
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "label": "Patient Record",
+   "options": "Patient",
+   "read_only": 1
+  },
+  {
+   "fieldname": "patient_appointment",
+   "fieldtype": "Link",
+   "label": "Patient Appointment",
+   "options": "Patient Appointment",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Ticks itself when the doctor closes the appointment.",
+   "fieldname": "consultation_done",
+   "fieldtype": "Check",
+   "label": "Consultation Done",
+   "read_only": 1
+  },
+  {
+   "depends_on": "doc.consultation_mode == \"Online\"",
+   "description": "Generated automatically. Do not type here.",
+   "fieldname": "meet_link",
+   "fieldtype": "Data",
+   "label": "Google Meet Link",
+   "read_only": 1
+  },
+  {
+   "depends_on": "doc.consultation_mode == \"Online\"",
+   "description": "Created automatically for Online consultations. Drives the Meet link.",
+   "fieldname": "doctor_consultation_ref",
+   "fieldtype": "Link",
+   "label": "Doctor Consultation",
+   "no_copy": 1,
+   "options": "Doctor Consultation",
+   "read_only": 1
+  },
+  {
+   "depends_on": "doc.consultation_mode == \"Online\"",
+   "fieldname": "meet_status",
+   "fieldtype": "Data",
+   "label": "Meet Link Status",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "doc.consultation_mode == \"In-Clinic\"",
+   "description": "Filled from settings. Edit only if this patient visits a different branch.",
+   "fieldname": "clinic_location",
+   "fieldtype": "Small Text",
+   "label": "Clinic Address"
+  },
+  {
+   "depends_on": "doc.lead_status == \"Appointment Booked\" || doc.lead_status == \"Consultation Done\"",
+   "fieldname": "notification_section",
+   "fieldtype": "Section Break",
+   "label": "Notifications Sent"
+  },
+  {
+   "default": "0",
+   "fieldname": "email_sent",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Email Sent",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "doc.email_sent",
+   "fieldname": "email_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Email Sent On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "notification_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "whatsapp_sent",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "WhatsApp Sent",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "doc.whatsapp_sent",
+   "fieldname": "whatsapp_sent_on",
+   "fieldtype": "Datetime",
+   "label": "WhatsApp Sent On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "For Online bookings the doctor is notified by the Doctor Consultation pipeline.",
+   "fieldname": "doctor_notified",
+   "fieldtype": "Check",
+   "label": "Doctor Notified",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "doc.doctor_notified",
+   "fieldname": "doctor_notified_on",
+   "fieldtype": "Datetime",
+   "label": "Doctor Notified On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "description": "Plain-language result of the last send attempt.",
+   "fieldname": "notification_remarks",
+   "fieldtype": "Small Text",
+   "label": "Notification Status",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "doc.lead_status == \"Appointment Booked\" || doc.lead_status == \"Consultation Done\"",
+   "fieldname": "reminder_section",
+   "fieldtype": "Section Break",
+   "label": "Reminders Sent"
+  },
+  {
+   "default": "0",
+   "description": "For Online bookings this is tracked on the Doctor Consultation instead.",
+   "fieldname": "reminder_sent",
+   "fieldtype": "Check",
+   "label": "30-Minute Reminder Sent",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "reminder_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "doc.reminder_sent",
+   "fieldname": "reminder_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Reminder Sent On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "source_section",
+   "fieldtype": "Section Break",
+   "label": "Source & Location"
+  },
+  {
+   "fieldname": "lead_source",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Lead Source",
+   "options": "Lead Source",
+   "reqd": 1
+  },
+  {
+   "fieldname": "campaign",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Campaign",
+   "options": "Campaign"
+  },
+  {
+   "fieldname": "source_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "National",
+   "fieldname": "region",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Region",
+   "options": "National\nInternational",
+   "reqd": 1
+  },
+  {
+   "default": "India",
+   "depends_on": "doc.region == \"International\"",
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "mandatory_depends_on": "doc.region == \"International\"",
+   "options": "Country"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "State / Province",
+   "options": "Consultation State"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "description": "Anything the patient said that the doctor should know.",
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks / Notes"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "system_section",
+   "fieldtype": "Section Break",
+   "label": "Record Info"
+  },
+  {
+   "default": "CL-.YYYY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Series",
+   "no_copy": 1,
+   "options": "CL-.YYYY.-.#####",
+   "print_hide": 1,
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "lead_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date of Lead",
+   "reqd": 1
+  },
+  {
+   "default": "__user",
+   "fieldname": "telecaller",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Telecaller",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "system_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "duplicate_of",
+   "fieldtype": "Link",
+   "label": "Earlier Lead From Same Number",
+   "no_copy": 1,
+   "options": "Consultation Lead",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Consultation Lead",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "make_attachments_public": 0,
+ "modified": "2026-08-18 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Doctor Consultation Meet",
+ "name": "Consultation Lead",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "search_fields": "patient_name,mobile_no,lead_status,chief_concern",
+ "show_preview_popup": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "patient_name",
+ "track_changes": 1
+}
