@@ -12,9 +12,13 @@ app_license = "MIT"
 doc_events = {
     # Existing: generates the Google Meet for online consultations
     "Doctor Consultation": {
-        # New: picks the doctor from the speciality, before the Meet job runs,
-        # so the invite, emails and WhatsApps all carry the right doctor.
-        "before_insert": "doctor_consultation_meet.services.doctor_routing.assign_doctor",
+        # New, and the order matters. apply_desk_booking copies the Offline
+        # fields onto the real fields first, so assign_doctor then reads a
+        # speciality that is already filled in.
+        "before_insert": [
+            "doctor_consultation_meet.services.desk_booking.apply_desk_booking",
+            "doctor_consultation_meet.services.doctor_routing.assign_doctor",
+        ],
         "after_insert": "doctor_consultation_meet.services.consultation_meet.on_doctor_consultation_after_insert",
         # New: pushes the Meet link + send status back onto the Consultation Lead
         "on_update": "doctor_consultation_meet.doctor_consultation_meet.doctype.consultation_lead.consultation_lead_notification.sync_from_doctor_consultation",
