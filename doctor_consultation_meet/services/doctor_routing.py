@@ -15,6 +15,7 @@ Healthcare Practitioner is enough. No code edit, no deploy.
 import re
 
 import frappe
+from frappe import _
 
 # ----------------------------------------------------------------------
 # Speciality to Healthcare Practitioner.
@@ -188,3 +189,123 @@ def preview_routing():
 		)
 
 	return "\n".join(lines)
+
+
+# ----------------------------------------------------------------------
+# Used by the Client Script and by the Reassign Doctor button
+# ----------------------------------------------------------------------
+@frappe.whitelist()
+def get_doctor_for_speciality(speciality):
+	"""Return the doctor this speciality points at, for the form to display."""
+	practitioner_id = get_practitioner_for_speciality(speciality)
+
+	row = frappe.db.get_value(
+		"Healthcare Practitioner",
+		practitioner_id,
+		["practitioner_name", "custom_email", "email_id", "mobile_phone", "residence_phone"],
+		as_dict=True,
+	)
+	if not row:
+		return None
+
+	return {
+		"practitioner": practitioner_id,
+		"doctor_name": row.get("practitioner_name") or "",
+		"doctor_email": first_value(row, EMAIL_FIELDS) or "",
+		"doctor_mobile": sanitize_mobile(first_value(row, MOBILE_FIELDS)) or "",
+	}
+
+
+@frappe.whitelist()
+def reassign_doctor(consultation_name):
+	"""Move a saved booking to the doctor its speciality now points at.
+
+	Deliberately manual. The Meet link and the emails already name the old
+	doctor, so this tells the new doctor and the patient, rather than changing
+	the fields quietly and leaving everyone with different details.
+	"""
+	from doctor_consultation_meet.services.notifications import send_doctor_email_notification
+	from doctor_consultation_meet.services.whatsapp_meta import safe_send_doctor_whatsapp
+
+	doc = frappe.get_doc("Doctor Consultation", consultation_name)
+	doc.check_permission("write")
+
+	target = get_doctor_for_speciality(doc.book_specialist)
+	if not target:
+		frappe.throw(_("No doctor found for this speciality."))
+
+	if target["doctor_name"] == doc.doctor_name:
+		return _("Already assigned to {0}.").format(doc.doctor_name)
+
+	previous = doc.doctor_name
+
+	frappe.db.set_value(
+		"Doctor Consultation",
+		doc.name,
+		{
+			"doctor_name": target["doctor_name"],
+			"doctor_email": target["doctor_email"],
+			"doctor_mobile": target["doctor_mobile"],
+		},
+		update_modified=True,
+	)
+	frappe.db.commit()
+
+	doc.reload()
+
+	if doc.g_meet:
+		send_doctor_email_notification(doc, doc.g_meet)
+		safe_send_doctor_whatsapp(doc, doc.g_meet)
+		notify_patient_of_change(doc, previous)
+
+	frappe.db.commit()
+
+	return _("Moved from {0} to {1}. The new doctor and the patient have been told.").format(
+		previous, target["doctor_name"]
+	)
+
+
+def notify_patient_of_change(doc, previous_doctor):
+	"""Send the patient the usual confirmation, with a line about the change.
+
+	Email only. A WhatsApp would need its own approved Meta template.
+	"""
+	from doctor_consultation_meet.services.notifications import build_patient_notification_message
+
+	if not doc.email_to:
+		return
+
+	try:
+		subject, message = build_patient_notification_message(doc, doc.g_meet)
+
+		note = (
+			'<div style="margin:0 0 18px 0;padding:14px 18px;background-color:#FAF6EF;'
+			'border-left:3px solid #BD9148;font-family:Arial,Helvetica,sans-serif;'
+			'font-size:14px;line-height:21px;color:#2B2B2B;">'
+			+ frappe.utils.escape_html(
+				"Your consultation is now with {0}, in place of {1}. "
+				"The date, the time and the meeting link stay the same.".format(
+					doc.doctor_name or "", previous_doctor or ""
+				)
+			)
+			+ "</div>"
+		)
+
+		marker = '<td align="center" style="padding:28px 12px;">'
+		if marker in message:
+			message = message.replace(marker, marker + note, 1)
+		else:
+			message = note + message
+
+		frappe.sendmail(
+			recipients=[doc.email_to],
+			subject=_("Update: your consultation is now with {0}").format(doc.doctor_name),
+			message=message,
+			now=True,
+		)
+
+	except Exception:
+		frappe.log_error(
+			title="Reassign: patient email failed",
+			message=frappe.get_traceback(),
+		)
