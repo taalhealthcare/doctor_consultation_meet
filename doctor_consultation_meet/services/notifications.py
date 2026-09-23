@@ -21,6 +21,17 @@ WEBSITE_URL = "https://www.taalhealthcare.com"
 
 ADMIN_EMAIL = "taalhealthcare5@gmail.com"
 
+# ----------------------------------------------------------------------
+# Email Template names, as created in the ERPNext UI.
+# The name must match character for character, spaces included.
+# If a template does not exist, the built-in design below is used instead.
+# ----------------------------------------------------------------------
+TEMPLATES = {
+	"patient": "Consultation Confirmation - Patient",
+	"doctor": "Consultation Confirmation - Doctor",
+	"admin": "Consultation Confirmation - Admin",
+}
+
 SERIF = "Georgia, 'Times New Roman', Times, serif"
 SANS = "Arial, 'Helvetica Neue', Helvetica, sans-serif"
 
@@ -144,6 +155,65 @@ def render_email(preheader, greeting, intro, date_text, time_text, rows_html, me
 
 
 # ----------------------------------------------------------------------
+# Email Template lookup
+# ----------------------------------------------------------------------
+def build_context(consultation, meet_link):
+	"""Everything an Email Template can use as {{ variable }}."""
+	return {
+		"patient_name": consultation.patient_name or "",
+		"doctor_name": consultation.doctor_name or "",
+		"specialist": consultation.book_specialist or "",
+		"appointment_date": consultation.appointment_date or "",
+		"appointment_time": consultation.time or "",
+		"mode": consultation.mode_of_consultation or "",
+		"mobile_number": consultation.mobile_number or "",
+		"email_to": consultation.email_to or "",
+		"payment_status": consultation.payment_status or "",
+		"booking_id": consultation.name or "",
+		"meet_link": meet_link or "",
+		"brand_name": BRAND_NAME,
+		"brand_short": BRAND_SHORT,
+		"support_phone": SUPPORT_PHONE,
+		"website": WEBSITE,
+		"website_url": WEBSITE_URL,
+	}
+
+
+def apply_template(key, consultation, meet_link, fallback_subject, fallback_message):
+	"""Use the Email Template if it exists, else keep the built-in design.
+
+	A missing or broken template must never stop a booking email, so every
+	failure falls back to the design in this file and is only logged.
+	"""
+	name = TEMPLATES.get(key)
+	if not name or not frappe.db.exists("Email Template", name):
+		return fallback_subject, fallback_message
+
+	try:
+		template = frappe.get_doc("Email Template", name)
+		context = build_context(consultation, meet_link)
+
+		subject = fallback_subject
+		if template.subject:
+			subject = frappe.render_template(template.subject, context)
+
+		body = template.response_html or template.response
+		message = fallback_message
+		if body:
+			message = frappe.render_template(body, context)
+
+		return subject, message
+
+	except Exception:
+		log_error(
+			title=f"Email Template render failed: {name}",
+			message=frappe.get_traceback(),
+			consultation_name=consultation.name,
+		)
+		return fallback_subject, fallback_message
+
+
+# ----------------------------------------------------------------------
 # Patient
 # ----------------------------------------------------------------------
 def build_patient_notification_message(consultation, meet_link):
@@ -170,7 +240,7 @@ def build_patient_notification_message(consultation, meet_link):
 		note="Please join a few minutes before the scheduled time. Use a quiet place with a stable internet connection, and keep any earlier reports with you.",
 	)
 
-	return subject, message
+	return apply_template("patient", consultation, meet_link, subject, message)
 
 
 # ----------------------------------------------------------------------
@@ -202,7 +272,7 @@ def build_doctor_notification_message(consultation, meet_link):
 		show_support=False,
 	)
 
-	return subject, message
+	return apply_template("doctor", consultation, meet_link, subject, message)
 
 
 # ----------------------------------------------------------------------
@@ -233,7 +303,7 @@ def build_admin_notification_message(consultation, meet_link):
 		show_support=False,
 	)
 
-	return subject, message
+	return apply_template("admin", consultation, meet_link, subject, message)
 
 
 # ----------------------------------------------------------------------
