@@ -35,8 +35,9 @@ doc_events = {
 # ----------------------------------------------------------------------
 scheduler_events = {
     "cron": {
-        # Appointment reminders: day-before and same-day, Online and In-Clinic.
-        "*/30 * * * *": [
+        # 30-minute reminders, Online and In-Clinic. Must run more often than
+        # the 30-minute window, so every 10 minutes (three chances per window).
+        "*/10 * * * *": [
             "doctor_consultation_meet.services.reminder.send_appointment_reminders",
         ],
     },

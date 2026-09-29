@@ -16,22 +16,23 @@ That split means there is exactly one owner of every message. Nothing is sent
 twice, and the proven Online path is untouched.
 """
 
-import json
+import re
 
 import frappe
 from frappe import _
-from frappe.utils import now_datetime
+from frappe.utils import add_to_date, get_datetime, getdate, now_datetime
 
 SETTINGS_DOCTYPE = "Doctor Consultation Meet Settings"
 
 EMAIL_TEMPLATE_CLINIC = "Consultation Confirmation - Clinic"
 
+# All four new Meta templates were approved as English (US).
+TEMPLATE_LANGUAGE = "en_US"
+
 # ----------------------------------------------------------------------
 # FIELD MAPPING — the ONE place to edit if a fieldname differs.
 #
-# Run this to see the real fieldnames on your Doctor Consultation DocType:
-#   bench --site erp.taalhealthcare.com console
-#   >>> [f.fieldname for f in frappe.get_meta("Doctor Consultation").fields]
+# To see the real fieldnames: Customize Form > Doctor Consultation.
 #
 # Each entry is a list of candidates tried in order. The first one that
 # actually exists on the DocType wins, so a wrong guess is skipped, never
@@ -46,8 +47,9 @@ DC_FIELD_CANDIDATES = {
 	"doctor_name": ["doctor_name"],
 	"doctor_mobile": ["doctor_mobile"],
 	"specialist": ["book_specialist"],
-	# --- STILL GUESSED: confirm with the console command in the guide ---
-	"mobile": ["patient_mobile", "mobile_no", "mobile", "phone", "contact_number"],
+	# --- STILL GUESSED (optional field, skipped safely if missing) ---
+	"mobile": ["mobile_number"],  # CONFIRMED from services/whatsapp_meta.py
+	"doctor": ["doctor_name"],  # used by services/reminder.py
 	"mode": ["mode_of_consultation"],  # CONFIRMED from services/utils.py
 	"notes": ["notes", "remarks", "description", "chief_complaint"],
 }
@@ -57,6 +59,18 @@ DC_FIELD_CANDIDATES = {
 # so the stored value only has to normalise to "online". If mode_of_consultation is a
 # Select, resolve_online_value() below picks the real option instead of guessing.
 ONLINE_MODE_VALUE = "Online"
+
+# Chief Concern (telecaller wording) -> book_specialist option on Doctor
+# Consultation. book_specialist is a Select, so any concern not listed here is
+# left blank and the existing emails fall back to "Doctor Consultation".
+CONCERN_TO_BOOK_SPECIALIST = {
+	"PEP": "PrEP/PEP",
+	"PrEP": "PrEP/PEP",
+	"STI / STD Concern": "STI/STD",
+	"HIV Consultation": "HIV Treatment",
+	"Erectile Dysfunction": "Men's Health",
+	"Premature Ejaculation": "Men's Health",
+}
 
 
 # ----------------------------------------------------------------------
@@ -170,7 +184,7 @@ def create_doctor_consultation(lead):
 		# so write the practitioner's name rather than its record ID.
 		"doctor_name": get_doctor_name(lead.doctor_assigned),
 		"doctor_mobile": get_practitioner_mobile(lead.doctor_assigned),
-		"specialist": lead.chief_concern,
+		"specialist": CONCERN_TO_BOOK_SPECIALIST.get(lead.chief_concern),
 		"mode": ONLINE_MODE_VALUE,
 		"notes": build_notes(lead),
 	}
@@ -229,11 +243,12 @@ def set_if_valid(doc, meta, fieldname, value):
 
 
 def format_time_for_dc(meta, appointment_time):
-	"""Match whatever format the Doctor Consultation time field expects.
+	"""Write the time in the same shape the website uses.
 
-	If it is a real Time field, pass the value straight through. If it is Data
-	or Select, your existing records may store a range string such as
-	"01:30 PM - 02:00 PM", so we write the start time in the same 12-hour shape.
+	On this site appointment_date and time are Data fields, and website
+	bookings store time as "04:00 PM - 04:30 PM". build_event_payload() splits
+	on the hyphen, and the existing emails and WhatsApps print this text as is,
+	so a telecaller booking must look exactly the same.
 	"""
 	if not appointment_time:
 		return None
@@ -246,7 +261,17 @@ def format_time_for_dc(meta, appointment_time):
 	if df and df.fieldtype == "Time":
 		return appointment_time
 
-	return frappe.format(appointment_time, {"fieldtype": "Time"})
+	start = to_datetime_today(appointment_time)
+	if not start:
+		return str(appointment_time)
+
+	duration = 30
+	if frappe.db.exists("DocType", SETTINGS_DOCTYPE):
+		duration = (
+			frappe.db.get_single_value(SETTINGS_DOCTYPE, "default_event_duration_minutes") or 30
+		)
+	end = add_to_date(start, minutes=int(duration), as_datetime=True)
+	return f"{start.strftime('%I:%M %p')} - {end.strftime('%I:%M %p')}"
 
 
 def resolve_field(meta, candidates):
@@ -323,9 +348,9 @@ def dispatch_in_clinic(lead, force=False):
 			params=[
 				lead.patient_name,
 				get_doctor_name(lead.doctor_assigned),
-				frappe.format(lead.appointment_date, {"fieldtype": "Date"}),
-				frappe.format(lead.appointment_time, {"fieldtype": "Time"}),
-				(lead.clinic_location or "").replace("\n", ", "),
+				fmt_date(lead.appointment_date),
+				fmt_time(lead.appointment_time),
+				address_for_whatsapp(lead.clinic_location),
 			],
 		)
 		if ok:
@@ -363,10 +388,11 @@ def notify_doctor_for_clinic(lead):
 		# Parameter order deliberately mirrors your existing doctor template
 		# (doctor, date, time, patient, specialist) so the doctor sees a
 		# familiar layout. Only the meet link is dropped.
+		# The template already says "Hello Dr. {{1}}", so drop any "Dr" prefix.
 		params=[
-			get_doctor_name(lead.doctor_assigned),
-			frappe.format(lead.appointment_date, {"fieldtype": "Date"}),
-			frappe.format(lead.appointment_time, {"fieldtype": "Time"}),
+			strip_dr_prefix(get_doctor_name(lead.doctor_assigned)),
+			fmt_date(lead.appointment_date),
+			fmt_time(lead.appointment_time),
 			lead.patient_name,
 			lead.chief_concern or _("General Consultation"),
 		],
@@ -428,6 +454,11 @@ def send_clinic_email(lead):
 
 def fallback_clinic_html(c):
 	address = (c["clinic_location"] or "").replace("\n", "<br>")
+	map_line = (
+		f'<p><a href="{c["clinic_map_link"]}">Open location in Google Maps</a></p>'
+		if c.get("clinic_map_link")
+		else ""
+	)
 	return f"""
 		<p>Dear {c['patient_name']},</p>
 		<p>Your <b>in-clinic consultation</b> is confirmed.</p>
@@ -438,6 +469,7 @@ def fallback_clinic_html(c):
 			<tr><td><b>Mode</b></td><td>In-Clinic (OPD)</td></tr>
 		</table>
 		<p><b>Please visit us at:</b><br>{address}</p>
+		{map_line}
 		<p>Kindly arrive ten minutes early and carry any previous reports.</p>
 		<p>Warm regards,<br>TAAL+ Healthcare</p>
 	"""
@@ -446,7 +478,7 @@ def fallback_clinic_html(c):
 # ======================================================================
 # WhatsApp via Meta Cloud API
 # ======================================================================
-def send_whatsapp_template(lead, template_name, params, language="en"):
+def send_whatsapp_template(lead, template_name, params, language=TEMPLATE_LANGUAGE):
 	"""Convenience wrapper for a Consultation Lead."""
 	return send_template(
 		mobile_no=lead.mobile_no,
@@ -457,76 +489,60 @@ def send_whatsapp_template(lead, template_name, params, language="en"):
 	)
 
 
-def send_template(mobile_no, region, template_name, params, language="en"):
-	"""Meta forbids free-form business-initiated messages, so this is template-only.
+def send_template(mobile_no, region, template_name, params, language=TEMPLATE_LANGUAGE):
+	"""Send one approved Meta template. Never raises.
 
-	Kept generic (no doc argument) so both Consultation Lead and Doctor
-	Consultation reminders can call it.
+	Uses the app's own send_template_message() from services/whatsapp_meta.py,
+	so it reads the same credentials as the working Online flow
+	(whatsapp_phone_number_id, whatsapp_access_token) and cleans the number
+	the same way (a 10-digit number gets 91 in front).
+
+	International numbers are passed as typed, so they must include the
+	country code.
+
+	Returns (ok, plain-language note for the lead).
 	"""
 	if not mobile_no:
 		return False, _("No mobile number, so no WhatsApp was sent.")
 
-	if not frappe.db.exists("DocType", SETTINGS_DOCTYPE):
-		return False, _("WhatsApp settings not found.")
+	from doctor_consultation_meet.services.whatsapp_meta import send_template_message
 
-	settings = frappe.get_single(SETTINGS_DOCTYPE)
-
-	# VERIFY these two fieldnames against your settings DocType.
-	try:
-		access_token = settings.get_password("access_token", raise_exception=False)
-	except Exception:
-		access_token = settings.get("access_token")
-
-	phone_number_id = settings.get("phone_number_id")
-
-	if not (access_token and phone_number_id):
-		return False, _("WhatsApp credentials are not configured.")
-
-	to_number = "91" + str(mobile_no) if region != "International" else str(mobile_no)
-
-	payload = {
-		"messaging_product": "whatsapp",
-		"to": to_number,
-		"type": "template",
-		"template": {
-			"name": template_name,
-			"language": {"code": language},
-			"components": [
-				{
-					"type": "body",
-					"parameters": [{"type": "text", "text": str(p or "")} for p in params],
-				}
-			],
-		},
-	}
-
-	try:
-		import requests
-
-		response = requests.post(
-			f"https://graph.facebook.com/v20.0/{phone_number_id}/messages",
-			headers={
-				"Authorization": f"Bearer {access_token}",
-				"Content-Type": "application/json",
-			},
-			data=json.dumps(payload),
-			timeout=15,
-		)
-
-		if response.status_code in (200, 201):
-			return True, _("WhatsApp sent to {0}.").format(mobile_no)
-
+	number = "".join(ch for ch in str(mobile_no) if ch.isdigit())
+	if region == "International" and len(number) == 10:
+		# A 10-digit foreign number without country code would wrongly get 91.
 		frappe.log_error(
 			title="Consultation Lead: WhatsApp send failed",
-			message=f"{response.status_code}\n{response.text}\n{json.dumps(payload)}",
+			message=f"International number without country code: {mobile_no}\nTemplate: {template_name}",
 		)
-		return False, _("WhatsApp could not be sent. Admin has been notified.")
+		return False, _("International number needs the country code. WhatsApp not sent.")
+
+	clean_params = [clean_param(p) for p in params]
+
+	try:
+		send_template_message(
+			to_number=number,
+			template_name=template_name,
+			template_language=language,
+			body_parameters=clean_params,
+		)
+		return True, _("WhatsApp sent to {0}.").format(mobile_no)
 
 	except Exception:
 		frappe.log_error(
-			title="Consultation Lead: WhatsApp exception", message=frappe.get_traceback()
+			title="Consultation Lead: WhatsApp send failed",
+			message=(
+				f"Template: {template_name} ({language})\nTo: {number}\n"
+				f"Params: {clean_params}\n\n{frappe.get_traceback()}"
+			),
 		)
 		return False, _("WhatsApp could not be sent. Admin has been notified.")
+
+
+def clean_param(value):
+	"""Meta rejects a parameter with a newline, a tab, or 4+ spaces in a row,
+	and an empty one. Make every value safe."""
+	text = re.sub(r"\s+", " ", str(value or "")).strip()
+	return text or "-"
 
 
 # ======================================================================
@@ -535,8 +551,61 @@ def send_template(mobile_no, region, template_name, params, language="en"):
 def get_default_clinic_address():
 	if not frappe.db.exists("DocType", SETTINGS_DOCTYPE):
 		return None
-	# VERIFY: add this field to your settings DocType if it does not exist.
 	return frappe.db.get_single_value(SETTINGS_DOCTYPE, "clinic_address")
+
+
+def get_clinic_map_link():
+	if not frappe.db.exists("DocType", SETTINGS_DOCTYPE):
+		return None
+	return frappe.db.get_single_value(SETTINGS_DOCTYPE, "clinic_map_link")
+
+
+def address_for_whatsapp(address):
+	"""One line, commas instead of line breaks, map link at the end if set."""
+	parts = [p.strip().strip(",") for p in (address or "").splitlines() if p.strip()]
+	text = ", ".join(parts)
+	link = get_clinic_map_link()
+	if link:
+		text = f"{text}. Map: {link}" if text else link
+	return text
+
+
+def strip_dr_prefix(name):
+	"""'Dr Smita Mahindrakar' or 'Dr. Sanjay Pujari' -> 'Smita Mahindrakar'."""
+	return re.sub(r"^\s*dr\.?\s+", "", name or "", flags=re.IGNORECASE).strip()
+
+
+def fmt_date(value):
+	"""2026-09-30 -> 'September 30, 2026' (matches the template samples)."""
+	if not value:
+		return ""
+	try:
+		d = getdate(value)
+		return f"{d.strftime('%B')} {d.day}, {d.year}"
+	except Exception:
+		return str(value)
+
+
+def fmt_time(value):
+	"""13:00:00 or '01:00 PM - 01:30 PM' -> '1:00 PM'."""
+	start = to_datetime_today(value)
+	if not start:
+		return str(value or "")
+	return start.strftime("%I:%M %p").lstrip("0")
+
+
+def to_datetime_today(value):
+	"""Any time format used in this app -> a datetime (date part unused)."""
+	# Lazy import: reminder.py imports this module at load time.
+	from doctor_consultation_meet.services.reminder import parse_start_time
+
+	start = parse_start_time(value)
+	if not start:
+		return None
+	try:
+		return get_datetime(f"2000-01-01 {start}")
+	except Exception:
+		return None
 
 
 def get_doctor_name(practitioner):
@@ -552,10 +621,11 @@ def build_context(lead):
 	return {
 		"patient_name": lead.patient_name,
 		"doctor_name": get_doctor_name(lead.doctor_assigned),
-		"appointment_date": frappe.format(lead.appointment_date, {"fieldtype": "Date"}),
-		"appointment_time": frappe.format(lead.appointment_time, {"fieldtype": "Time"}),
+		"appointment_date": fmt_date(lead.appointment_date),
+		"appointment_time": fmt_time(lead.appointment_time),
 		"consultation_mode": lead.consultation_mode,
 		"meet_link": lead.meet_link,
 		"clinic_location": lead.clinic_location,
+		"clinic_map_link": get_clinic_map_link(),
 		"chief_concern": lead.chief_concern,
 	}

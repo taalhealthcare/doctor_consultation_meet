@@ -27,6 +27,9 @@ from frappe.utils import add_to_date, get_datetime, now_datetime, nowdate
 
 from doctor_consultation_meet.doctor_consultation_meet.doctype.consultation_lead.consultation_lead_notification import (
 	DC_FIELD_CANDIDATES,
+	address_for_whatsapp,
+	fmt_date,
+	fmt_time,
 	get_doctor_name,
 	resolve_field,
 	send_template,
@@ -128,9 +131,10 @@ def remind_online_consultations(now):
 			template_name=TEMPLATE_ONLINE,
 			params=[
 				row.get(name_field) if name_field else "",
-				get_doctor_name(row.get(doctor_field)) if doctor_field else "",
-				frappe.format(row.get(date_field), {"fieldtype": "Date"}),
-				frappe.format(row.get(time_field), {"fieldtype": "Time"}) if time_field else "",
+				# doctor_name on Doctor Consultation is already a display name.
+				(row.get(doctor_field) if doctor_field else "") or _("our doctor"),
+				fmt_date(row.get(date_field)),
+				fmt_time(row.get(time_field)) if time_field else "",
 				row.get("g_meet") or _("link shared by email"),
 			],
 		)
@@ -182,9 +186,9 @@ def remind_clinic_leads(now):
 			params=[
 				row.patient_name,
 				get_doctor_name(row.doctor_assigned),
-				frappe.format(row.appointment_date, {"fieldtype": "Date"}),
-				frappe.format(row.appointment_time, {"fieldtype": "Time"}),
-				(row.clinic_location or "").replace("\n", ", "),
+				fmt_date(row.appointment_date),
+				fmt_time(row.appointment_time),
+				address_for_whatsapp(row.clinic_location),
 			],
 		)
 

@@ -26,7 +26,10 @@
   "whatsapp_template_name",
   "whatsapp_template_language",
   "doctor_whatsapp_template_name",
-  "doctor_whatsapp_template_language"
+  "doctor_whatsapp_template_language",
+  "clinic_section",
+  "clinic_address",
+  "clinic_map_link"
  ],
  "fields": [
   {
@@ -109,51 +112,69 @@
    "label": "Auto Create on Insert"
   },
   {
-  "default": "0",
-  "fieldname": "whatsapp_enabled",
-  "fieldtype": "Check",
-  "label": "WhatsApp Enabled"
+   "default": "0",
+   "fieldname": "whatsapp_enabled",
+   "fieldtype": "Check",
+   "label": "WhatsApp Enabled"
   },
   {
-  "fieldname": "whatsapp_phone_number_id",
-  "fieldtype": "Data",
-  "label": "WhatsApp Phone Number ID"
+   "fieldname": "whatsapp_phone_number_id",
+   "fieldtype": "Data",
+   "label": "WhatsApp Phone Number ID"
   },
   {
-  "fieldname": "whatsapp_access_token",
-  "fieldtype": "Password",
-  "label": "WhatsApp Access Token"
+   "fieldname": "whatsapp_access_token",
+   "fieldtype": "Password",
+   "label": "WhatsApp Access Token"
   },
   {
-  "default": "hello_world",
-  "fieldname": "whatsapp_template_name",
-  "fieldtype": "Data",
-  "label": "WhatsApp Template Name"
+   "default": "hello_world",
+   "fieldname": "whatsapp_template_name",
+   "fieldtype": "Data",
+   "label": "WhatsApp Template Name"
   },
   {
-  "default": "en_US",
-  "fieldname": "whatsapp_template_language",
-  "fieldtype": "Data",
-  "label": "WhatsApp Template Language"
+   "default": "en_US",
+   "fieldname": "whatsapp_template_language",
+   "fieldtype": "Data",
+   "label": "WhatsApp Template Language"
   },
   {
-  "default": "hello_world",
-  "fieldname": "doctor_whatsapp_template_name",
-  "fieldtype": "Data",
-  "label": "Doctor WhatsApp Template Name"
+   "default": "hello_world",
+   "fieldname": "doctor_whatsapp_template_name",
+   "fieldtype": "Data",
+   "label": "Doctor WhatsApp Template Name"
   },
   {
-  "default": "en_US",
-  "fieldname": "doctor_whatsapp_template_language",
-  "fieldtype": "Data",
-  "label": "Doctor WhatsApp Template Language"
+   "default": "en_US",
+   "fieldname": "doctor_whatsapp_template_language",
+   "fieldtype": "Data",
+   "label": "Doctor WhatsApp Template Language"
+  },
+  {
+   "fieldname": "clinic_section",
+   "fieldtype": "Section Break",
+   "label": "Clinic (In-Clinic Bookings)"
+  },
+  {
+   "fieldname": "clinic_address",
+   "fieldtype": "Small Text",
+   "label": "Clinic Address",
+   "description": "Printed in In-Clinic confirmation and reminder messages. Line breaks become commas on WhatsApp."
+  },
+  {
+   "fieldname": "clinic_map_link",
+   "fieldtype": "Data",
+   "options": "URL",
+   "label": "Clinic Google Maps Link",
+   "description": "Optional. Added after the address on WhatsApp and as a link in the email."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-03-10 13:28:18.606490",
+ "modified": "2026-09-29 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Doctor Consultation Meet",
  "name": "Doctor Consultation Meet Settings",
