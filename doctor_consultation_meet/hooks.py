@@ -5,6 +5,14 @@ app_description = "Google Meet automation for Doctor Consultation"
 app_email = "contact@taalhealthcare.com"
 app_license = "MIT"
 
+add_to_apps_screen = [
+    {
+        "name": "taal_inventory",
+        "logo": "/assets/taal_inventory/images/taal-logo.png",
+        "title": "TAAL+ Desk",
+        "route": "/app/taal-desk",
+    }
+]
 
 # ----------------------------------------------------------------------
 # Document events
